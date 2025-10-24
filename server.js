@@ -1,4 +1,3 @@
-// server.js
 import express from "express";
 import mongoose from "mongoose";
 import nodemailer from "nodemailer";
@@ -13,9 +12,10 @@ app.use(bodyParser.json());
 app.use(express.static("public"));
 
 // 1. Connect MongoDB
-mongoose.connect(process.env.MONGO_URI)
+mongoose
+  .connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB Connected"))
-  .catch(err => console.error("❌ MongoDB Error", err));
+  .catch((err) => console.error("❌ MongoDB Error", err));
 
 // 2. Define schema
 const reminderSchema = new mongoose.Schema({
@@ -26,7 +26,7 @@ const reminderSchema = new mongoose.Schema({
   repeat: String,
   priority: String,
   sentCount: { type: Number, default: 0 },
-  active: { type: Boolean, default: true }
+  active: { type: Boolean, default: true },
 });
 
 const Reminder = mongoose.model("Reminder", reminderSchema);
@@ -36,8 +36,8 @@ const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  }
+    pass: process.env.EMAIL_PASS,
+  },
 });
 
 // 4. API Routes
@@ -69,7 +69,7 @@ app.post("/api/send-test", async (req, res) => {
       from: process.env.EMAIL_USER,
       to: recipient,
       subject: subject,
-      text: message + "\n\n[Test Email]"
+      text: message + "\n\n[Test Email]",
     });
     res.json({ success: true, message: "Test email sent!" });
   } catch (err) {
@@ -81,7 +81,10 @@ app.post("/api/send-test", async (req, res) => {
 // 5. Cron-like scheduler
 setInterval(async () => {
   const now = new Date();
-  const dueReminders = await Reminder.find({ active: true, when: { $lte: now } });
+  const dueReminders = await Reminder.find({
+    active: true,
+    when: { $lte: now },
+  });
 
   for (const r of dueReminders) {
     try {
@@ -89,7 +92,7 @@ setInterval(async () => {
         from: process.env.EMAIL_USER,
         to: r.recipient,
         subject: r.subject,
-        text: r.message
+        text: r.message,
       });
 
       console.log(`📧 Sent reminder to ${r.recipient}`);
